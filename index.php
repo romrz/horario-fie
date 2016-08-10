@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/app.css">
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,400,900" rel="stylesheet">
 </head>
 <body>
 
@@ -28,9 +28,10 @@
 
     <div class="index-page-container">
         <div class="index-page">
-            <h1>Planea tu horario de la FIE</h1> 
-            <!-- <h2>Ahora es mucho más fácil que nunca</h2> -->
+            <h1>Horario FIE</h1> 
+            <h2>Planear tu horario de la FIE ahora es fácil y rápido</h2>
             <button class="btn btn-success input-lg" id="main-button">¡Planear mi horario!</button>
+            <h3>¡Selecciona las materias que desees cursar este semestre y obtén todos los posibles horarios!</h3>
         </div>
     </div>
 
