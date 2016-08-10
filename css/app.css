@@ -1,24 +1,78 @@
 html, body {
     width: 100%;
     height: 100%;
+    font-family: 'Roboto', sans-serif;
+}
+
+* {
+    border-radius: 0 !important;
+    /*box-shadow: 1px 1px 10px 0 #BBB;*/
 }
 
 body {
     background-color: #EEE;
-    /*background-image: url("/green-gobbler.png");*/
     background-image: url("/mirrored-squares.png");
 
-    color: #666;    
+    color: #555;    
+}
+
+.remove-subject-btn {
+    width: 100%;
+}
+
+.form-control {
+    box-shadow: 1px 1px 10px 0 #BBB;
+}
+
+.btn, .form-control {
+    border: none !important;
+}
+
+.btn-primary {
+    color: #fff !important;
+}
+
+.subject-form {
+    margin: auto;
+    width: 100%;
+}
+
+.subject-form select {
+    width: 100% !important;
+}
+
+.btn-subject {
+    box-shadow: 1px 1px 10px 0 #BBB;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .subject-form select {
+        width: 70% !important;
+    }
+
+    .btn-subject {
+        width: 29.5%;
+    }
 }
 
 table td {
     border-color: #EEE !important; 
 }
 
-.container form {
-    margin: auto;
-    width: 80%;
+.app-container {
+    display: none;
 }
+
+.left-side, .right-side {
+    min-width: 10%;
+}
+
+.center-side {
+    /*min-width: 80%;*/
+    width: 100%;
+}
+
 
 
 
@@ -47,37 +101,39 @@ table td {
 }
 
 .index-page button {
-    font-size: 2em;
-    padding: 10px 50px;
+    font-size: 1.5em;
+    padding: 20px;
     height: auto;
+    width: 90%;
 }
+
 
 .start-message {
     margin: 10% auto;
-    width: 80%;
     text-align: center;
     color: #BBB;
 }
 
 .btn-primary {
-    background-color: #434480;
-    border-color: #434480;
-    box-shadow: 1px 1px 10px #AAA;
+    background-color: #384368;
+    border-color: #384368;
+    box-shadow: 1px 1px 10px 0 #BBB;
     color: #ded4ff;
 }
 
 .btn-primary:hover, .btn-primary:active, .btn-primary:visited, .btn-primary:focus {
-    background-color: #333280 !important;
+    background-color: #4d4f6b !important;
 }
 
 
 /* Navbar */
 
 .navbar-inverse {
-    background-color: #5d6080;
+    background-color: #384368;
     border: none;
     border-radius: 0;
-    box-shadow: 0 0 10px 0 #999;
+    /*box-shadow: 0 0 10px 0 #999;*/
+    box-shadow: 1px 1px 10px 0 #BBB;
 }
 
 .navbar a {
@@ -85,11 +141,11 @@ table td {
 }
 
 .navbar-brand {
-    opacity: 0.5;
+    opacity: 0.9;
 }
 
 .navbar-brand:hover {
-    opacity: 0.7;
+    opacity: 1.0;
 }
 
 
@@ -101,11 +157,37 @@ table td {
     top: 10px;
     left: 0;
     right: 0;
+    width: 50%;
     margin: auto;
-    max-width: 400px;
+    /*max-width: 400px;*/
+    /*width: 50%;*/
+
     padding: 5px;
     z-index: 9999999;
     display: none;
+    color: #fff;
+    border-radius: 100px !important;
+    text-align: center;
+}
+
+.alert-success {
+    background-color: #5cb85c;
+    border-color: #5cb85c;
+}
+
+.alert-info {
+    background-color: #5bc0de;
+    border-color: #5bc0de;
+}
+
+.alert-warning {
+    background-color: #f0ad4e;
+    border-color: #f0ad4e;
+}
+
+.alert-danger {
+    background-color: #d9534f;
+    border-color: #d9534f;
 }
 
 
@@ -113,20 +195,17 @@ table td {
 /* Info Container */
 
 .info-container {
-    margin: 20px auto;
-    width: 80%;
+    margin: 15px auto;
 }
 
 .plan {
     background-color: #fff;
-    border-radius: 7px;
     box-shadow: 1px 1px 10px 0 #BBB;
     overflow: hidden;
     display: none;
 }
 
 .schedule, .groups {
-    border-radius: 0 0 7px 7px;
     overflow: hidden;
 }
 
@@ -136,37 +215,40 @@ table td {
 }
 
 .schedule table td {
+    border: #BBB thin solid;
     text-align: center;
     width: 18%;
 }
 
 .schedule table td:first-child {
-    border-color: #5d6080 !important; 
-    background-color: #5d6080; 
+    border: none !important;
+    background-color: #384368; 
     color: #fff;
     width: 10%;
 }
 
 .schedule table tr:first-child {
-    background-color: #5d6080; 
+    background-color: #384368; 
     color: #fff;
 }
 
 .schedule table tr:first-child td {
-    border-color: #5d6080 !important; 
+    border: none !important;
     padding: 12px;
 }
 
 .groups table td {
+    border: #BBB thin solid;
     vertical-align: middle !important;
 }
 
 .groups table tr:first-child {
-    background-color: #ddd;
+    background-color: #6979B1;
+    color: #fff;
 }
 
 .groups table tr:first-child td {
-    border-color: #ddd !important;
+    border: none !important;
 }
 
 
@@ -192,7 +274,8 @@ table td {
 }
 
 .td-subject:hover, .td-subject:active {
-    background-color: #EEE;
+    background-color: #6979B1;
+    color: #fff;
 }
 
 .td-subject:hover .td-subject-name, .td-subject:active .td-subject-name {
@@ -209,7 +292,7 @@ table td {
 
 .selected-subjects {
     background-color: #fff;
-    border-radius: 7px;
+    /*border-radius: 7px;*/
     box-shadow: 1px 1px 10px 0 #BBB;
     overflow: hidden;
     margin: 20px auto;
@@ -217,12 +300,12 @@ table td {
 }
 
 .selected-subjects table tr:first-child {
-    background-color: #5d6080;
+    background-color: #384368;
     color: #fff;
 }
 
 .selected-subjects table tr:first-child td {
-    border-color: #5d6080 !important;
+    border-color: #384368 !important;
 }
 
 .selected-subjects table td {
@@ -234,23 +317,21 @@ table td {
 .schedule-tab, .groups-tab {
     cursor: pointer;
     float:left;
-    height: 30px;
+    height: 40px;
     width: 50%;
     text-align: center;
-    line-height: 30px;
+    line-height: 40px;
 }
 
 .schedule-tab {
-    background-color: #5d6080;
-    border-top-left-radius: 7px;
+    background-color: #384368;
     color: #fff;
     overflow: hidden;
 }
 
 .groups-tab {
-    background-color: #DDD;
-    border-top-right-radius: 7px;
-    color: #666;
+    background-color: #6979B1;
+    color: #fff;
     overflow: hidden;
 }
 
@@ -274,11 +355,45 @@ table td {
 }
 
 .left-control {
-    left: 5%;
+    left: 1%;
 }
 
 .right-control {
-    right: 5%;
+    right: 1%;
+}
+
+.show {
+    display: block;
+}
+
+.hide {
+    display: none;
+}
+
+
+.clear-float {
+    clear: both;
+}
+
+.slide-controls {
+    margin: 15px auto 0 auto;
+}
+
+.slide-control-mobile {
+    display: none;
+    width: 45%;
+}
+
+.slide-controls > .left-control {
+    float: left;
+}
+
+.slide-controls > .right-control {
+    float: right;
+}
+
+.slide-control-mobile button {
+    width: 100%;
 }
 
 /* Loader */

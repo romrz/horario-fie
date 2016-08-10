@@ -2,10 +2,13 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Horario FIE - Planear tu horario nunca fue tan fácil</title>
 
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/app.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 </head>
 <body>
 
@@ -22,20 +25,23 @@
  -->        </div>
     </nav>
 
+
     <div class="index-page-container">
         <div class="index-page">
             <h1>Planea tu horario de la FIE</h1> 
             <!-- <h2>Ahora es mucho más fácil que nunca</h2> -->
-            <button class="btn btn-primary input-lg" id="main-button">¡Planear mi horario!</button>
+            <button class="btn btn-success input-lg" id="main-button">¡Planear mi horario!</button>
         </div>
     </div>
 
-    <div class="container app-container" style="display:none;">
 
-        <form id="form">
-            <div class="input-group">
+    <div class="container-fluid app-container">
+        <div class="left-side hidden-xs hidden-sm"></div> 
+
+        <div class="center-side">
+            <form class="form-inline subject-form">
                 <select name="materia" class="form-control input-lg" id="materia">
-                    <option value='-1' selected disabled>Selecciona una materia que desees añadir a tu horario</option>
+                    <option value='-1' selected disabled>Selecciona una materia</option>
                     <option value='OC0400-T'>Administración</option>
                     <option value='OC0613-T'>Administración de Proyectos</option>
                     <option value='IA7751-T'>Administración de Sistemas Operativos</option>
@@ -221,68 +227,79 @@
                     <option value='IA7720-T'>Visión Computacional I</option>
                     <option value='IA7721-T'>Visión Computacional II</option>
                 </select>
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-default input-lg btn-subject"> Añadir a mi horario </button>
-                </span>
-            </div>
-        </form>
 
-        <div class="start-message">
-            <h3>Empieza por seleccionar alguna materia que desees cursar este semestre</h3> 
-        </div>
+                <button type="button" class="btn btn-success input-lg btn-subject"> Añadir a mi horario </button>
+            </form>
 
-        <div class="info-container">
-
-            <div class="plans">
-            </div>
-
-            <div class="selected-subjects">
-                <table class="table table-bordered">
-                    <tr><td>Materias seleccionadas</td><td>Remover</td></tr>
-                </table>
-            </div>
-
-        </div>
-
-
-
-        <div class="plan-div-blueprint" style="visibility: hidden; display: none;">
-            <div class="plan">
-                <div class="tab schedule-tab tab-selected">Horario <span class="small">(1 de 12)</span></div>
-                <div class="tab groups-tab">Grupos</div>
-                <div class="clear-left"></div>
-                <div class="schedule">
-                    <table class="table table2 table-bordered">
-                        <tr><td>Hora</td><td>Lunes</td><td>Martes</td><td>Miercoles</td><td>Jueves</td><td>Viernes</td></tr> 
-                        <tr><td>7 - 8</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>8 - 9</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>9 - 10</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>10 - 11</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>11 - 12</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>12 - 13</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>13 - 14</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>14 - 15</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>15 - 16</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>16 - 17</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>17 - 18</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>18 - 19</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                        <tr><td>19 - 20</td><td></td><td></td><td></td><td></td><td></td></tr> 
-                    </table>
+            <div class="slide-controls hidden-md hidden-lg">
+                <div class="slide-control-mobile left-control">
+                    <button class="btn btn-primary input-lg btn-slide-control">Horario anterior</button>
                 </div>
-                <div class="groups">
+                <div class="slide-control-mobile right-control">
+                    <button class="btn btn-primary input-lg btn-slide-control">Siguiente horario</button>
+                </div>           
+                <div class="clear-float"></div>
+            </div>
+
+            <div class="start-message">
+                <h3>Empieza por seleccionar alguna materia que desees cursar este semestre</h3> 
+            </div>
+
+            <div class="info-container">
+                <div class="plans">
+                </div>
+
+                <div class="selected-subjects">
                     <table class="table table-bordered">
-                        <tr><td>Grupo</td><td>Materia</td><td>Profesor</td></tr>
+                        <tr><td>Materias seleccionadas</td><td>Remover</td></tr>
                     </table>
                 </div>
             </div>
+
+            <div class="plan-div-blueprint" style="visibility: hidden; display: none;">
+                <div class="plan">
+                    <div class="tab schedule-tab tab-selected">Horario <span class="small">(1 de 12)</span></div>
+                    <div class="tab groups-tab">Grupos</div>
+                    <div class="clear-left"></div>
+                    <div class="schedule">
+                        <table class="table table-hover">
+                            <tr><td>Hora</td><td>Lunes</td><td>Martes</td><td>Miercoles</td><td>Jueves</td><td>Viernes</td></tr> 
+                            <tr><td>7 - 8</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>8 - 9</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>9 - 10</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>10 - 11</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>11 - 12</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>12 - 13</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>13 - 14</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>14 - 15</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>15 - 16</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>16 - 17</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>17 - 18</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>18 - 19</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                            <tr><td>19 - 20</td><td></td><td></td><td></td><td></td><td></td></tr> 
+                        </table>
+                    </div>
+                    <div class="groups">
+                        <table class="table table-hover">
+                            <tr><td>Grupo</td><td>Materia</td><td>Profesor</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+
+        <div class="right-side hidden-xs hidden-sm"></div>
+
     </div>
+
 
     <div class="message alert" id="message"><button type="button" class="close close-btn"><span>&times;</span></button><span></span></div>
 
     <div class="loader"></div>
-    <div class="slide-control left-control"><button class="btn btn-primary"><</button></div>
-    <div class="slide-control right-control"><button class="btn btn-primary">></button></div>
+    <div class="slide-control left-control hidden-xs hidden-sm"><button class="btn btn-primary btn-slide-control"><</button></div>
+    <div class="slide-control right-control hidden-xs hidden-sm"><button class="btn btn-primary btn-slide-control">></button></div>
 
 
     <script src="js/jquery.js"></script>

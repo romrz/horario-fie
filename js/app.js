@@ -331,6 +331,7 @@ function showPlans() {
     $(".plans").empty();
     hideMessage();
     $(".slide-control").hide();
+    $(".slide-control-mobile").hide();
 
     containerPlansLength = 0;
     currentPlanIndex = 0;
@@ -341,10 +342,13 @@ function showPlans() {
     $(".plan .groups").hide();
 
     if(plans.length == 0) {
-        showMessage("No se encontro ningun horario", "warning");
+        showMessage("No se encontro ningun horario con las materias seleccionadas", "warning");
+    }
+    else if(plans.length == 1) {
+        showMessage("Se encontró <b>1</b> horario", "success") 
     }
     else {
-        showMessage("Se encontraron <b>" + plans.length + "</b> posibles horarios", "info") 
+        showMessage("Se encontraron <b>" + plans.length + "</b> posibles horarios", "success") 
     }
 
     containerPlansLength = 1;
@@ -404,7 +408,7 @@ function removeSubject(subject) {
 var selectedSubjects = [];
 var plans = [];
 
-$("#form .btn-subject").click(function(e) {
+$(".btn-subject").click(function(e) {
 
     $("#materia").attr("disabled", "disabled");
     $(".btn-subject").attr("disabled", "disabled"); 
@@ -413,6 +417,7 @@ $("#form .btn-subject").click(function(e) {
     $(".info-container").hide();
     $(".loader").show();
     $(".slide-control").hide();
+    $(".slide-control-mobile").hide();
 
     console.log("Waiting for response");
 
@@ -503,7 +508,7 @@ $(document).ready(function() {
 
     });
 
-    $("body").on("click", ".slide-control", function (event) {
+    $("body").on("click", ".btn-slide-control", function (event) {
         var button = $(event.target).parent();
 
         var tabSelected = $(".current .tab-selected");
@@ -530,8 +535,11 @@ $(document).ready(function() {
             next.show();
 
             $(".right-control").show();
+            // $(".right-control").addClass("show");
             if(next.prev().length == 0) {
-                button.hide();
+                $(".left-control").hide();
+                // button.hide();
+                // button.addClass("hide");
             }
         }
         else if(button.hasClass("right-control")) {
@@ -545,8 +553,11 @@ $(document).ready(function() {
             displayNextPlan(currentPlanIndex, tabToSelect);
 
             $(".left-control").show();
+            // $(".left-control").addClass("show");
             if((currentPlanIndex + 1) >= plans.length) {
-                button.hide();
+                $(".right-control").hide();
+                // button.hide();
+                // button.addClass("hide");
             }
         }
     }); 
@@ -565,6 +576,6 @@ $(document).ready(function() {
 
     $("#main-button").click(function() {
         $(".index-page-container").hide();
-        $(".app-container").show(); 
+        $(".app-container").css("display", "flex"); 
     })
 });
