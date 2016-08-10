@@ -34,11 +34,9 @@ Plan.prototype.display = function() {
 
     planDiv.find(".schedule-tab span").html("(" + (currentPlanIndex + 1) + " de " + plans.length + ")");
 
-    console.time("Group display");
     for(var i = 0; i < this.groups.length; i++) {
         this.groups[i].display(planDiv);
     }
-    console.timeEnd("Group display");
 }
 
 var Subject = function(name) {
@@ -577,5 +575,5 @@ $(document).ready(function() {
     $("#main-button").click(function() {
         $(".index-page-container").hide();
         $(".app-container").css("display", "flex"); 
-    })
+    });
 });

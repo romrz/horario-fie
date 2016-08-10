@@ -214,6 +214,19 @@ table td {
     padding: 0;
 }
 
+.schedule {
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    font-size: x-small;
+}
+
+@media (min-width: 768px) {
+    .schedule {
+        font-size: medium;
+    }
+}
+
 .schedule table td {
     border: #BBB thin solid;
     text-align: center;
@@ -225,6 +238,7 @@ table td {
     background-color: #384368; 
     color: #fff;
     width: 10%;
+    min-width: 60px;
 }
 
 .schedule table tr:first-child {

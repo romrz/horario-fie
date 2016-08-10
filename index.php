@@ -261,6 +261,7 @@
                     <div class="tab schedule-tab tab-selected">Horario <span class="small">(1 de 12)</span></div>
                     <div class="tab groups-tab">Grupos</div>
                     <div class="clear-left"></div>
+
                     <div class="schedule">
                         <table class="table table-hover">
                             <tr><td>Hora</td><td>Lunes</td><td>Martes</td><td>Miercoles</td><td>Jueves</td><td>Viernes</td></tr> 
@@ -279,6 +280,7 @@
                             <tr><td>19 - 20</td><td></td><td></td><td></td><td></td><td></td></tr> 
                         </table>
                     </div>
+
                     <div class="groups">
                         <table class="table table-hover">
                             <tr><td>Grupo</td><td>Materia</td><td>Profesor</td></tr>
