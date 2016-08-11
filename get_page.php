@@ -15,7 +15,7 @@ function getUrl($ch, $url, $fields)
 
 function getSubjectPage($subject = '')
 {
-    $url = 'https://escolar.fie.umich.mx/20162016/estudiante/materia-sig.php';
+    $url = 'https://escolar.fie.umich.mx/actual/estudiante/materia-sig.php';
     $fields = [
         'materia' => $subject,
         // The next two lines aren't important. It's just additional information.

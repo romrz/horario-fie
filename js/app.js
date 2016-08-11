@@ -420,10 +420,11 @@ $(".btn-subject").click(function(e) {
     console.log("Waiting for response");
 
     $.ajax({
-        url: "pageScript.php",
+        url: "https://horario-fie.herokuapp.com/pageScript.php",
         method: "POST",
         data: { materia: $("#materia").val() },
-        dataType: "html"
+        dataType: "html",
+        crossDomain: true,
     })
     .done(function(html) {
         console.log("Response arrived");
