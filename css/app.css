@@ -105,6 +105,10 @@ table td {
     font-weight: 100;
 }
 
+.index-page h6 {
+    color: #777;
+}
+
 .index-page button {
     font-size: 1.5em;
     font-weight: 300;
