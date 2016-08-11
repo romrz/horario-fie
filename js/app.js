@@ -32,7 +32,7 @@ Plan.prototype.schedule = function() {
 Plan.prototype.display = function() {
     var planDiv = $(".plans").append($(".plan-div-blueprint").html()).find(".plan:last-child");
 
-    planDiv.find(".schedule-tab span").html("(" + (currentPlanIndex + 1) + " de " + plans.length + ")");
+    planDiv.find(".schedule-tab").html("Horario (" + (currentPlanIndex + 1) + " de " + plans.length + ")");
 
     for(var i = 0; i < this.groups.length; i++) {
         this.groups[i].display(planDiv);
