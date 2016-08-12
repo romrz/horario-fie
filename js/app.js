@@ -43,6 +43,8 @@ var Subject = function(name) {
     var obj = Object.create(Subject.prototype);
 
     obj.name = name;
+    obj.optional = "";
+    obj.credits = 0;
     obj.groups = []; 
 
     return obj;
@@ -191,13 +193,22 @@ var SubjectParser = function(html) {
 }
 
 SubjectParser.prototype.parse = function() {
-    var node = $("<div></div>").html(this.html).find(".interesante");
+    var htmlNode = $("<div></div>").html(this.html);
+    var node = htmlNode.find(".interesante");
+
+    var basicInfoNode = htmlNode.find("table").not(".menu").first().find("tr").last();
+
+    var optional = basicInfoNode.find("td:nth-child(3)").html();
+    optional = optional == "S" ? "Si" : "No";
+    var credits = parseInt(basicInfoNode.find("td:nth-child(4)").html());
 
     if(node.children().length == 0) return null;
 
     var subjectName = node.find("td").html().split("<br>")[0];
 
     var subject = Subject(subjectName);
+    subject.optional = optional;
+    subject.credits = credits;
     subject.setGroups(this.parseGroups(node));
 
     return subject;
@@ -387,6 +398,9 @@ function hideMessage(withEffect) {
 function removeSubject(subject) {
     for(var i = 0; i < selectedSubjects.length; i++) {
         if(selectedSubjects[i].name == subject) {
+            totalCredits -= selectedSubjects[i].credits;
+            $("span.credits").html(totalCredits);
+
             selectedSubjects.splice(i, 1);
 
             $(".selected-subjects table tr:nth-child(" + (i + 2) + ")").remove();
@@ -404,6 +418,7 @@ function removeSubject(subject) {
 }
 
 var selectedSubjects = [];
+var totalCredits = 0;
 var plans = [];
 
 $(".btn-subject").click(function(e) {
@@ -441,7 +456,11 @@ $(".btn-subject").click(function(e) {
          
             selectedSubjects.push(subject);
             $(".selected-subjects").show();
-            $(".selected-subjects table").append("<tr><td>" + subject.name + "</td><td><button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name + "\">&times;</button></td></tr>");
+            $(".selected-subjects table").append(
+                "<tr><td>" + subject.name + "</td><td>" + subject.credits + "</td><td>" + subject.optional + "</td><td><button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name + "\">&times;</button></td></tr>");
+
+            totalCredits += subject.credits;
+            $("span.credits").html(totalCredits);
 
             plans = getNewPossiblePlans(plans, selectedSubjects[selectedSubjects.length - 1]);
 
