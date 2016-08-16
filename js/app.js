@@ -1,4 +1,97 @@
 
+
+var selectedSubjects = [];
+var totalCredits = 0;
+var plans = [];
+var timer = null;
+var currentPlanIndex = 0;
+var containerPlansLength = 0;
+
+$(document).ready(function () {
+    $("#main-button").click(startEvent);
+    $(".btn-subject").click(addSubjectEvent);
+    $("body").on("click", ".tab", changeTabEvent);
+    $("body").on("click", ".btn-slide-control", changeScheduleEvent); 
+    $("body").on("click", ".remove-subject-btn", removeSubjectEvent);
+    $(".message .close-btn").click(hideMessageEvent);
+});
+
+
+var SubjectParser = function(html) {
+    var obj = Object.create(SubjectParser.prototype);
+
+    obj.html = html;
+
+    return obj;
+}
+
+SubjectParser.prototype.parse = function() {
+    var htmlNode = $("<div></div>").html(this.html);
+    var node = htmlNode.find(".interesante");
+
+    var basicInfoNode = htmlNode.find("table").not(".menu").first().find("tr").last();
+
+    var optional = basicInfoNode.find("td:nth-child(3)").html();
+    optional = optional == "S" ? "Si" : "No";
+    var credits = parseInt(basicInfoNode.find("td:nth-child(4)").html());
+
+    if(node.children().length == 0) return null;
+
+    var subjectName = node.find("td").html().split("<br>")[0];
+
+    var subject = Subject(subjectName);
+    subject.optional = optional;
+    subject.credits = credits;
+    subject.setGroups(this.parseGroups(node));
+
+    return subject;
+}
+
+SubjectParser.prototype.parseGroups = function (htmlNode) {
+    var Class = this;
+    var groups = [];
+    var groupNodes = htmlNode.find("table").parent().parent();
+
+    groupNodes.each(function(index, groupNode) {
+        var node = $(groupNode);
+
+        var groupData = node.find("td:first-child").html().split("<br>");
+
+        var group = Group();
+        group.number = groupData[1].substr(6, groupData[1].length);
+        group.teacher = groupData[2];
+        group.schedule = Class.parseSchedule(node.find("table"));
+
+        groups.push(group);
+    });
+
+    return groups; 
+}
+
+SubjectParser.prototype.parseSchedule = function(htmlNode) {
+    return Schedule(this.parseScheduleEntries(htmlNode));
+}
+
+SubjectParser.prototype.parseScheduleEntries = function(htmlNode) {
+    var entries = [];
+    var entryNodes = $(htmlNode).find("tr").not(":first-child");
+
+    entryNodes.each(function(index, entryNode) {
+        var entryData = $(entryNode).find("td").append("|").text().split("|");
+
+        var entry = ScheduleEntry();
+        entry.day = getDayNumber(entryData[0]);
+        entry.startTime = parseInt(entryData[1].substr(0, 2));
+        entry.endTime = parseInt(entryData[2].substr(0, 2));
+        entry.classroom = entryData[3];
+
+        entries.push(entry);
+    });   
+
+    return entries;
+}
+
+
 var Plan = function(groups) {
     var obj = Object.create(Plan.prototype);
 
@@ -8,9 +101,7 @@ var Plan = function(groups) {
 }
 
 Plan.prototype.clone = function () {
-    var plan = Plan(this.groups.slice());
-
-    return plan;
+    return Plan(this.groups.slice());
 }
 
 Plan.prototype.addGroup = function(group) {
@@ -39,6 +130,7 @@ Plan.prototype.display = function() {
     }
 }
 
+
 var Subject = function(name) {
     var obj = Object.create(Subject.prototype);
 
@@ -57,6 +149,7 @@ Subject.prototype.setGroups = function (groups) {
     }
 }
 
+
 var Group = function() {
     var obj = Object.create(Group.prototype);
 
@@ -69,20 +162,15 @@ var Group = function() {
 }
 
 Group.prototype.display = function(planDiv) {
-    console.time("Groups table");
     var groupsTable = planDiv.find(".groups table");
-    console.timeEnd("Groups table");
+
     groupsTable.append(
         "<tr><td>" + this.number + "</td><td>" + this.subject.name + "</td><td>" + this.teacher + "</td></tr>"
     );
 
-    // planDiv.find(".groups table").append(
-    //     "<tr><td>" + this.number + "</td><td>" + this.subject.name + "</td><td>" + this.teacher + "</td></tr>"
-    // );
-    // console.time("Schedule display");
     this.schedule.display(planDiv.find(".schedule table"), this);
-    // console.timeEnd("Schedule display");
 }
+
 
 var Schedule = function(entries) {
     var obj = Object.create(Schedule.prototype);
@@ -164,10 +252,12 @@ var ScheduleEntry = function() {
 
 ScheduleEntry.prototype.display = function(table, group) {
     for(var i = this.startTime; i < this.endTime; i++) {
-        table.find("tr:nth-child(" + (i - 5) + ") td:nth-child(" + (this.day + 2) + ")").addClass("td-subject")
-        .html("<span class=\"td-subject-name\">" + group.subject.name + "</span>" + "<span class=\"td-subject-classroom\">" + this.classroom + "</span>");// + " (" + group.number + ") " + this.classroom);
+        table.find("tr:nth-child(" + (i - 5) + ") td:nth-child(" + (this.day + 2) + ")")
+        .addClass("td-subject")
+        .html("<span class=\"td-subject-name\">" + group.subject.name + "</span>" + "<span class=\"td-subject-classroom\">" + this.classroom + "</span>");
     }
 }
+
 
 function getDayNumber(day) {
     switch(day) {
@@ -184,116 +274,25 @@ function getDayNumber(day) {
     } 
 }
 
-var SubjectParser = function(html) {
-    var obj = Object.create(SubjectParser.prototype);
-
-    obj.html = html;
-
-    return obj;
-}
-
-SubjectParser.prototype.parse = function() {
-    var htmlNode = $("<div></div>").html(this.html);
-    var node = htmlNode.find(".interesante");
-
-    var basicInfoNode = htmlNode.find("table").not(".menu").first().find("tr").last();
-
-    var optional = basicInfoNode.find("td:nth-child(3)").html();
-    optional = optional == "S" ? "Si" : "No";
-    var credits = parseInt(basicInfoNode.find("td:nth-child(4)").html());
-
-    if(node.children().length == 0) return null;
-
-    var subjectName = node.find("td").html().split("<br>")[0];
-
-    var subject = Subject(subjectName);
-    subject.optional = optional;
-    subject.credits = credits;
-    subject.setGroups(this.parseGroups(node));
-
-    return subject;
-}
-
-SubjectParser.prototype.parseGroups = function (htmlNode) {
-    var groups = [];
-
-    var Class = this;
-
-    var groupNodes = htmlNode.find("table").parent().parent();
-    groupNodes.each(function(index, groupNode) {
-        var node = $(groupNode);
-
-        var groupData = node.find("td:first-child").html().split("<br>");
-
-        var group = Group();
-        group.number = groupData[1].substr(6, groupData[1].length);
-        group.teacher = groupData[2];
-        group.schedule = Class.parseSchedule(node.find("table"));
-
-        groups.push(group);
-    });
-
-    return groups; 
-}
-
-SubjectParser.prototype.parseSchedule = function(htmlNode) {
-    return Schedule(this.parseScheduleEntries(htmlNode));
-}
-
-SubjectParser.prototype.parseScheduleEntries = function(htmlNode) {
-    var entries = [];
-
-    var entryNodes = $(htmlNode).find("tr").not(":first-child");
-    entryNodes.each(function(index, entryNode) {
-        var entryData = $(entryNode).find("td").append("|").text().split("|");
-
-        var entry = ScheduleEntry();
-        entry.day = getDayNumber(entryData[0]);
-        entry.startTime = parseInt(entryData[1].substr(0, 2));
-        entry.endTime = parseInt(entryData[2].substr(0, 2));
-        entry.classroom = entryData[3];
-
-        entries.push(entry);
-    });   
-
-    return entries;
-}
-
-function displayPlans(plans) {
-    if(plans.length == 0) {
-        return;
-    }
-
-    plans[0].display();
-
-    $(".plans .plan:first-child").addClass("current").show();
-    $(".slide-control").hide();
-    if(plans.length > 1) {
-        $(".right-control").show();
-    }
-}
-
 function getNewPossiblePlans(oldPlans, subject) {
-    var possiblePlans = [];
+    var newPlans = [];
 
-    if(oldPlans.length == 0) {
-        for(var i = 0; i < subject.groups.length; i++) {
-            possiblePlans.push(Plan([subject.groups[i]]));
+    for(var i = 0; i < subject.groups.length; i++) {
+        if(oldPlans.length == 0) {
+            newPlans.push(Plan([subject.groups[i]]));
+            continue;
         }
-        return possiblePlans;
-    }
 
-    for(var i = 0; i < oldPlans.length; i++) {
-        for(var j = 0; j < subject.groups.length; j++) {
-            if(!oldPlans[i].schedule().overlaps(subject.groups[j].schedule)) {
-                var newPlan = oldPlans[i].clone();
-                newPlan.addGroup(subject.groups[j]);
-                possiblePlans.push(newPlan);
+        for (var j = 0; j < oldPlans.length; j++) {
+            if(!oldPlans[j].schedule().overlaps(subject.groups[i].schedule)) {
+                var newPlan = oldPlans[j].clone();
+                newPlan.addGroup(subject.groups[i]);
+                newPlans.push(newPlan);
             }
         }
     }
 
-    return possiblePlans;
+    return newPlans;
 }
 
 function getAllPossiblePlans() {
@@ -306,39 +305,15 @@ function getAllPossiblePlans() {
     return possiblePlans;
 }
 
-function isPlanPossible(groups) {
-    var schedule = Schedule([]);
-
-    for(var i = 0; i < groups.length; i++) {
-        if(!schedule.combine(groups[i].schedule))
-            return false;
-    }
-
-    return true;
-}
-
 function isSubjectSelected(subject) {
     for(var i = 0; i < selectedSubjects.length; i++) {
         if(subject.name == selectedSubjects[i].name) return true;
     }
 }
 
-function combinations(sets,f,context){
-    if (!context) context=this;
-    var p=[],max=sets.length-1,lens=[];
-    for (var i=sets.length;i--;) lens[i]=sets[i].length;
-    function dive(d){
-        var a=sets[d], len=lens[d];
-        if (d==max) for (var i=0;i<len;++i) p[d]=a[i], f.apply(context,p);
-        else        for (var i=0;i<len;++i) p[d]=a[i], dive(d+1);
-        p.pop();
-    }
-    dive(0);
-}
-
 function showPlans() {
-    $(".plans").empty();
     hideMessage();
+    $(".plans").empty();
     $(".slide-control").hide();
     $(".slide-control-mobile").hide();
 
@@ -347,23 +322,26 @@ function showPlans() {
 
     if(selectedSubjects.length == 0) return;
 
-    displayPlans(plans);
-    $(".plan .groups").hide();
-
     if(plans.length == 0) {
         showMessage("No se encontro ningun horario con las materias seleccionadas", "warning");
+        return;
     }
     else if(plans.length == 1) {
-        showMessage("Se encontró <b>1</b> horario", "success") 
+        showMessage("Se encontró <b>1</b> horario", "success"); 
     }
     else {
-        showMessage("Se encontraron <b>" + plans.length + "</b> posibles horarios", "success") 
+        showMessage("Se encontraron <b>" + plans.length + "</b> posibles horarios", "success"); 
+        $(".right-control").show();
     }
+
+    plans[0].display();
+
+    $(".plans .plan:first-child").addClass("current").show();
+    $(".plan .groups").hide();
 
     containerPlansLength = 1;
 }
 
-var timer = null;
 
 function showMessage(message, type) {
     hideMessage(false);
@@ -399,12 +377,11 @@ function removeSubject(subject) {
     for(var i = 0; i < selectedSubjects.length; i++) {
         if(selectedSubjects[i].name == subject) {
             totalCredits -= selectedSubjects[i].credits;
-            $("span.credits").html(totalCredits);
 
             selectedSubjects.splice(i, 1);
 
             $(".selected-subjects table tr:nth-child(" + (i + 2) + ")").remove();
-
+            $("span.credits").html(totalCredits);
             if(selectedSubjects.length == 0) {
                 $(".selected-subjects").hide();
                 $(".start-message").show();
@@ -417,22 +394,35 @@ function removeSubject(subject) {
     return false;
 }
 
-var selectedSubjects = [];
-var totalCredits = 0;
-var plans = [];
+function startEvent() {
+    $(".index-page-container").hide();
+    $(".app-container").css("display", "flex"); 
+}
 
-$(".btn-subject").click(function(e) {
+function addSubject(subject) {
+    selectedSubjects.push(subject);
 
+    $(".selected-subjects table").append(
+        "<tr><td>" + subject.name +
+        "</td><td>" + subject.credits +
+        "</td><td>" + subject.optional +
+        "</td><td><button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name +
+        "\">&times;</button></td></tr>"
+    );
+
+    totalCredits += subject.credits;
+    $("span.credits").html(totalCredits);
+}
+
+function addSubjectEvent(event) {
     $("#materia").attr("disabled", "disabled");
     $(".btn-subject").attr("disabled", "disabled"); 
-    hideMessage();
+    hideMessage(false);
     $(".start-message").hide();
     $(".info-container").hide();
-    $(".loader").show();
     $(".slide-control").hide();
     $(".slide-control-mobile").hide();
-
-    console.log("Waiting for response");
+    $(".loader").show();
 
     $.ajax({
         url: "https://horario-fie.herokuapp.com/pageScript.php",
@@ -442,28 +432,15 @@ $(".btn-subject").click(function(e) {
         crossDomain: true,
     })
     .done(function(html) {
-        console.log("Response arrived");
-
         var subject = SubjectParser(html).parse();
-
-        console.log("Subject parsed");
 
         if(subject == null) {
             showMessage("No existen grupos para la materia seleccionada", "danger");
             return;
         }
         if(!isSubjectSelected(subject)) { 
-         
-            selectedSubjects.push(subject);
-            $(".selected-subjects").show();
-            $(".selected-subjects table").append(
-                "<tr><td>" + subject.name + "</td><td>" + subject.credits + "</td><td>" + subject.optional + "</td><td><button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name + "\">&times;</button></td></tr>");
-
-            totalCredits += subject.credits;
-            $("span.credits").html(totalCredits);
-
+            addSubject(subject);
             plans = getNewPossiblePlans(plans, selectedSubjects[selectedSubjects.length - 1]);
-
         }
 
         showPlans();
@@ -475,27 +452,66 @@ $(".btn-subject").click(function(e) {
         $("#materia").removeAttr("disabled");
         $(".btn-subject").removeAttr("disabled"); 
         $(".loader").hide();
+        $(".selected-subjects").show();
         $(".info-container").show();
     });
 
-    e.preventDefault();
-});
-
-function showTab(tabName) {
-    if(tabName == "schedule") {
-        $(".current .tab-selected").removeClass("tab-selected");
-        $(".current .schedule-tab").addClass("tab-selected");
-        $(".current .schedule").show();
-        $(".current .groups").hide();
-    }
-    else if(tabName == "groups") {
-        $(".current .tab-selected").removeClass("tab-selected");
-        $(".current .groups-tab").addClass("tab-selected");
-        $(".current .groups").show();
-        $(".current .schedule").hide();
-    }
+    event.preventDefault();
 }
 
+function changeTabEvent(event) {
+    var clickedTab = $(event.target);
+    if(clickedTab.hasClass("tab-selected")) return;
+    showTab(clickedTab.data("tab"));
+}
+
+function showTab(tabName) {
+    $(".current .tab-selected").removeClass("tab-selected");
+    $(".current ." + tabName + "-tab").addClass("tab-selected");
+    $(".current .schedule").hide();
+    $(".current .groups").hide();
+    $(".current ." + tabName).show();
+}
+
+function changeScheduleEvent(event) {
+    var button = $(event.target).parent();
+
+    var tabToSelect = $(".current .tab-selected").data("tab");
+
+    if(button.hasClass("left-control")) {
+        currentPlanIndex--;
+
+        var current = $(".current");
+        var next = current.prev();
+
+        current.removeClass("current");
+        current.hide();
+
+        next.addClass("current");
+        showTab(tabToSelect);
+        next.show();
+
+        $(".right-control").show();
+        if(next.prev().length == 0) {
+            $(".left-control").hide();
+        }
+    }
+    else if(button.hasClass("right-control")) {
+        currentPlanIndex++;
+
+        var current = $(".current");
+
+        current.removeClass("current");
+        current.hide();
+
+        displayNextPlan(currentPlanIndex, tabToSelect);
+
+        $(".left-control").show();
+        if((currentPlanIndex + 1) >= plans.length) {
+            $(".right-control").hide();
+        }
+    }
+} 
 
 function displayNextPlan(index, tabToSelect) {
     if(index >= containerPlansLength) {
@@ -509,91 +525,14 @@ function displayNextPlan(index, tabToSelect) {
     current.show();
 }
 
-var currentPlanIndex = 0;
-var containerPlansLength = 0;
+function removeSubjectEvent(event) {
+    var subject = $(event.target).data("subject");
+    if(removeSubject(subject)) {
+        plans = getAllPossiblePlans();
+        showPlans();
+    }
+}
 
-
-$(document).ready(function() {
-    $("body").on("click", ".tab", function (event) {
-        if($(event.target).hasClass("tab-selected")) return;
-
-        if($(event.target).hasClass("schedule-tab")) {
-            showTab("schedule");
-        }
-        else if($(event.target).hasClass("groups-tab")) {
-            showTab("groups")
-        }
-
-    });
-
-    $("body").on("click", ".btn-slide-control", function (event) {
-        var button = $(event.target).parent();
-
-        var tabSelected = $(".current .tab-selected");
-        var tabToSelect = "";
-
-        if(tabSelected.hasClass("schedule-tab")) {
-            tabToSelect = "schedule";
-        }
-        else if(tabSelected.hasClass("groups-tab")) {
-            tabToSelect = "groups";
-        }
-
-        if(button.hasClass("left-control")) {
-            currentPlanIndex--;
-
-            var current = $(".current");
-            var next = current.prev();
-
-            current.removeClass("current");
-            current.hide();
-
-            next.addClass("current");
-            showTab(tabToSelect);
-            next.show();
-
-            $(".right-control").show();
-            // $(".right-control").addClass("show");
-            if(next.prev().length == 0) {
-                $(".left-control").hide();
-                // button.hide();
-                // button.addClass("hide");
-            }
-        }
-        else if(button.hasClass("right-control")) {
-            currentPlanIndex++;
-
-            var current = $(".current");
-
-            current.removeClass("current");
-            current.hide();
-
-            displayNextPlan(currentPlanIndex, tabToSelect);
-
-            $(".left-control").show();
-            // $(".left-control").addClass("show");
-            if((currentPlanIndex + 1) >= plans.length) {
-                $(".right-control").hide();
-                // button.hide();
-                // button.addClass("hide");
-            }
-        }
-    }); 
-
-    $("body").on("click", ".remove-subject-btn", function(event) {
-        var subject = $(event.target).data("subject");
-        if(removeSubject(subject)) {
-            plans = getAllPossiblePlans();
-            showPlans();
-        }
-    });
-
-    $(".message .close-btn").click(function(event) {
-        hideMessage(true); 
-    });
-
-    $("#main-button").click(function() {
-        $(".index-page-container").hide();
-        $(".app-container").css("display", "flex"); 
-    });
-});
+function hideMessageEvent() {
+    hideMessage(true);
+}
