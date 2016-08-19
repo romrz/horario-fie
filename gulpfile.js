@@ -50,7 +50,7 @@ gulp.task('images', function() {
     Concatenates and minifies all the javascript files.
 */
 gulp.task('scripts', function() {
-    gulp.src([paths.jquery, paths.bootstrapJS, './src/js/*.js'])
+    gulp.src([paths.jquery, './src/js/*.js'])
     .pipe(concat('scripts.js'))
     .pipe(uglify())
     .pipe(gulp.dest('./assets/js/'));

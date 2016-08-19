@@ -462,3 +462,14 @@ table td {
     height: 80%;
     display: none;
 }
+
+
+/* Don't collapse bootstrap navbar */
+
+.navbar-nav>li, .navbar-nav, .navbar-header {
+  float: left !important;
+}
+
+.navbar-right {
+  float: right !important;
+}
