@@ -1,22 +1,42 @@
 
+// User's plan
+var plan = null;
 
-var selectedSubjects = [];
-var totalCredits = 0;
-var plans = [];
+// Helper to show a message for only certain time
 var timer = null;
-var currentPlanIndex = 0;
-var containerPlansLength = 0;
 
 $(document).ready(function () {
+
+    // User presses the main button in the index page
     $("#main-button").click(startEvent);
+
+    // User presses the "add subject" button
     $(".btn-subject").click(addSubjectEvent);
-    $("body").on("click", ".tab", changeTabEvent);
-    $("body").on("click", ".btn-slide-control", changeScheduleEvent); 
+
+    // User presses any of the buttons to change the current group plan
+    $("body").on("click", ".btn-slide-control", changeGroupPlanEvent); 
+
+    // User presses the button to remove a subject
     $("body").on("click", ".remove-subject-btn", removeSubjectEvent);
-    $(".message .close-btn").click(hideMessageEvent);
+
+    // User presses one of the tabs (schedule or groups)
+    $("body").on("click", ".tab", function(event) {
+        showTab($(event.target).data("tab"));
+    });
+
+    // User closes a message
+    $(".message .close-btn").click(function() {
+        hideMessage(true);
+    });
+
 });
 
 
+/*
+    SubjectParser is the responsible for obtaining the relevant subject
+    information from the raw HTML retrieved by the request to:
+    https://escolar.fie.umich.mx/actual/estudiante/materia-sig.php
+*/
 var SubjectParser = function(html) {
     var obj = Object.create(SubjectParser.prototype);
 
@@ -25,28 +45,33 @@ var SubjectParser = function(html) {
     return obj;
 }
 
+/*
+    Parses the subject and all its information from the raw HTML
+
+    Returns a Subject if there were no errors or null otherwise
+*/
 SubjectParser.prototype.parse = function() {
     var htmlNode = $("<div></div>").html(this.html);
-    var node = htmlNode.find(".interesante");
-
     var basicInfoNode = htmlNode.find("table").not(".menu").first().find("tr").last();
+    var groupsInfoNode = htmlNode.find(".interesante");
 
-    var optional = basicInfoNode.find("td:nth-child(3)").html();
-    optional = optional == "S" ? "Si" : "No";
-    var credits = parseInt(basicInfoNode.find("td:nth-child(4)").html());
+    if(groupsInfoNode.children().length == 0) return null;
 
-    if(node.children().length == 0) return null;
-
-    var subjectName = node.find("td").html().split("<br>")[0];
-
-    var subject = Subject(subjectName);
-    subject.optional = optional;
-    subject.credits = credits;
-    subject.setGroups(this.parseGroups(node));
+    var subject = Subject();
+    subject.id = basicInfoNode.find("td:nth-child(1)").html();
+    subject.name = basicInfoNode.find("td:nth-child(2)").html();
+    subject.optional = basicInfoNode.find("td:nth-child(3)").html() == "S" ? "Si" : "No";
+    subject.credits = parseInt(basicInfoNode.find("td:nth-child(4)").html());
+    subject.setGroups(this.parseGroups(groupsInfoNode));
 
     return subject;
 }
 
+/*
+    Parses the groups of the subject and all its information.
+    
+    Returns an array of Group objects.
+*/
 SubjectParser.prototype.parseGroups = function (htmlNode) {
     var Class = this;
     var groups = [];
@@ -56,11 +81,12 @@ SubjectParser.prototype.parseGroups = function (htmlNode) {
         var node = $(groupNode);
 
         var groupData = node.find("td:first-child").html().split("<br>");
+        var scheduleNode = node.find("table");
 
         var group = Group();
         group.number = groupData[1].substr(6, groupData[1].length);
         group.teacher = groupData[2];
-        group.schedule = Class.parseSchedule(node.find("table"));
+        group.schedule = Class.parseSchedule(scheduleNode);
 
         groups.push(group);
     });
@@ -68,11 +94,23 @@ SubjectParser.prototype.parseGroups = function (htmlNode) {
     return groups; 
 }
 
+/*
+    Parses the schedule for a single group.
+    The schedule information is inside the HTML Node given.
+
+    Returns a Schedule object.
+*/
 SubjectParser.prototype.parseSchedule = function(htmlNode) {
     return Schedule(this.parseScheduleEntries(htmlNode));
 }
 
+/*
+    Parses the schedule entries of a group from the HTML Node given.
+
+    Returns an array of ScheduleEntry's.
+*/
 SubjectParser.prototype.parseScheduleEntries = function(htmlNode) {
+    var Class = this;
     var entries = [];
     var entryNodes = $(htmlNode).find("tr").not(":first-child");
 
@@ -80,7 +118,7 @@ SubjectParser.prototype.parseScheduleEntries = function(htmlNode) {
         var entryData = $(entryNode).find("td").append("|").text().split("|");
 
         var entry = ScheduleEntry();
-        entry.day = getDayNumber(entryData[0]);
+        entry.day = Class.getDayNumber(entryData[0]);
         entry.startTime = parseInt(entryData[1].substr(0, 2));
         entry.endTime = parseInt(entryData[2].substr(0, 2));
         entry.classroom = entryData[3];
@@ -91,50 +129,276 @@ SubjectParser.prototype.parseScheduleEntries = function(htmlNode) {
     return entries;
 }
 
+/*
+    Returns the day number corresponding to the day name.
+*/
+SubjectParser.prototype.getDayNumber = function(day) {
+    switch(day) {
+        case "Lun": return 0;
+        case "Mar": return 1;
+        case "Mie": return 2;
+        case "Jue": return 3;
+        case "Vie": return 4;
+        default: return -1;
+    } 
+}
 
-var Plan = function(groups) {
+
+/*
+    Basically, a Plan is all the subjects the user wants to course
+    for the semester. Just the subjects, not a specific group.
+
+    A Plan can have many possible "schedules".
+    We will refer to these "schedules" as Group Plans to avoid ambiguities
+    with the schedule of a specific group.
+    A group plan is a possible combination of groups for the selected subjects.
+
+    A Plan object holds the subjects a user has selected as well as 
+    all the possible group plans for those subjects.
+*/
+var Plan = function() {
     var obj = Object.create(Plan.prototype);
+
+    obj.subjects = [];
+    obj.groupPlans = [];
+    obj.credits = 0;
+
+    // Currently displaying group plan index
+    obj.currentGroupPlan = 0;
+    // Total of group plans displayed so far
+    obj.displayedGroupPlans = 0;
+
+    return obj;
+}
+
+/*
+    Adds a subject to the plan. Recalculating the possible group plans
+*/
+Plan.prototype.addSubject = function(subject) {
+    this.subjects.push(subject);
+    this.credits += subject.credits;
+
+    this.calculateNewGroupPlans(subject);
+
+    // Displays the new subject and the new credit count
+    addSubjectToTable(subject);
+    $("span.credits").html(this.credits);
+}
+
+/*
+    Removes a subject from the plan. Recalculating the possible group plans.
+*/
+Plan.prototype.removeSubject = function(subjectName) {
+    for(var i = 0; i < this.subjects.length; i++) {
+        if(this.subjects[i].name != subjectName) continue;
+
+        this.credits -= this.subjects[i].credits;
+        this.subjects.splice(i, 1);
+        this.calculateGroupPlans();
+
+        // Updates the DOM
+        removeSubjectFromTable(i);
+        $("span.credits").html(this.credits);
+
+        if(this.subjects.length == 0) {
+            showStartMessage();
+        }
+
+        return;
+    }
+}
+
+/*
+    Checks if the plan already has the subject given.
+*/
+Plan.prototype.hasSubject = function(subject) {
+    for(var i = 0; i < this.subjects.length; i++) {
+        if(subject.name == this.subjects[i].name) return true;
+    }
+    return false;
+}
+
+/*
+    Calculates the possible group plans after adding the subject given
+    to the plan.
+*/
+Plan.prototype.calculateNewGroupPlans = function(subject) {
+    var newGroupPlans = [];
+
+    for(var i = 0; i < subject.groups.length; i++) {
+        // If there aren't group plans currently, create a new group plan
+        // for each subject's group
+        if(this.groupPlans.length == 0) {
+            newGroupPlans.push(GroupPlan([subject.groups[i]]));
+            continue;
+        }
+
+        // If there are group plans already, check every group plan with every subject's group
+        // and get only the ones whose schedule does not overlap.
+        for (var j = 0; j < this.groupPlans.length; j++) {
+            if(this.groupPlans[j].getSchedule().overlaps(subject.groups[i].schedule)) continue;
+
+            var newGroupPlan = this.groupPlans[j].clone();
+            newGroupPlan.addGroup(subject.groups[i]);
+            newGroupPlans.push(newGroupPlan);
+        }
+    }
+
+    this.groupPlans = newGroupPlans;
+}
+
+/*
+    Calculates all the possible group plans for the subjects
+    in the plan.
+*/
+Plan.prototype.calculateGroupPlans = function() {
+    this.groupPlans = [];
+    for(var i = 0; i <  this.subjects.length; i++) {
+        this.calculateNewGroupPlans(this.subjects[i]);
+    }
+}
+
+/*
+    Displays only the first group plan in the set of
+    possible group plans.
+
+    For speed performance, we display the group plans to the user "on the fly".
+    It means that we don't put all the group plans on the DOM because
+    that is too slow. Instead, we display them as the user requests it (by
+    clicking the "show next schedule" button).
+*/
+Plan.prototype.displayFirstGroupPlan = function() {
+    $(".slide-control").hide();
+    $(".slide-control-mobile").hide();
+    $(".plans").empty();
+
+    this.displayedGroupPlans = 0;
+    this.currentGroupPlan = 0;
+
+    if(this.subjects.length == 0) return;
+
+    if(this.groupPlans.length == 0) {
+        showMessage("No se encontro ningun horario con las materias seleccionadas", "warning");
+        return;
+    }
+    else if(this.groupPlans.length == 1) {
+        showMessage("Se encontró <b>1</b> horario", "success"); 
+    }
+    else {
+        showMessage("Se encontraron <b>" + this.groupPlans.length + "</b> posibles horarios", "success"); 
+        $(".right-control").show();
+    }
+
+    this.groupPlans[0].display();
+    this.displayedGroupPlans = 1;
+
+    $(".plans .plan:first-child").addClass("current").show();
+    $(".plan .groups").hide();
+}
+
+/*
+    Displays the next group plan to the user.
+*/
+Plan.prototype.displayNextGroupPlan = function() {
+    // If the group plan is not in the DOM yet, it is first put in.
+    if(++this.currentGroupPlan >= this.displayedGroupPlans) {
+        plan.groupPlans[this.currentGroupPlan].display(); 
+        this.displayedGroupPlans++;
+    }
+
+    showGroupPlan(this, $(".current").next());
+}
+
+/*
+    Displays the previous group plan to the user.
+*/
+Plan.prototype.displayPreviousGroupPlan = function() {
+    this.currentGroupPlan--;
+    showGroupPlan(this, $(".current").prev());
+}
+
+/*
+    A Group Plan is a combination of groups of the selected subjects
+    so that the union of its schedules does not overlaps.
+
+    A Group Plan in this context is like the "schedule" for the semester.
+*/
+var GroupPlan = function(groups) {
+    var obj = Object.create(GroupPlan.prototype);
 
     obj.groups = groups;
 
     return obj;
 }
 
-Plan.prototype.clone = function () {
-    return Plan(this.groups.slice());
+/*
+    Clones the GroupPlan.
+*/
+GroupPlan.prototype.clone = function () {
+    return GroupPlan(this.groups.slice());
 }
 
-Plan.prototype.addGroup = function(group) {
+/*
+    Adds a group to the group plan.
+*/
+GroupPlan.prototype.addGroup = function(group) {
     this.groups.push(group);
 }
 
-Plan.prototype.schedule = function() {
+/*
+    Gets the schedule for this group plan.
+
+    It combines the schedules of every single group in this
+    group plan to create a schedule containing all group schedule's entries.
+
+    Returns the Schedule or null if the individual schedules overlap.
+*/
+GroupPlan.prototype.getSchedule = function() {
     var schedule = Schedule([]);
 
     for(var i = 0; i < this.groups.length; i++) {
-        if(!schedule.combine(this.groups[i].schedule)) {
-            return null;
-        }
+        if(!schedule.combine(this.groups[i].schedule)) return null;
     }
 
     return schedule;
 }
 
-Plan.prototype.display = function() {
-    var planDiv = $(".plans").append($(".plan-div-blueprint").html()).find(".plan:last-child");
+/*
+    Displays the group plan to the user.
+*/
+GroupPlan.prototype.display = function() {
+    // Gets the group plan HTML template and appends it
+    // to the group plan container
+    var groupPlanTemplate = $(".plan-div-blueprint").html();
+    var plansContainer = $(".plans");
+    plansContainer.append(groupPlanTemplate);
 
-    planDiv.find(".schedule-tab").html("Horario (" + (currentPlanIndex + 1) + " de " + plans.length + ")");
+    // Gets the just inserted group plan div
+    var groupPlanElement = plansContainer.find(".plan:last-child");
 
+    var current = plan.currentGroupPlan + 1;
+    var total = plan.groupPlans.length;
+
+    groupPlanElement.find(".schedule-tab").html(
+        "Horario (" + current + " de " + total + ")"
+    );
+
+    // Displays each group's information. (Schedule, teacher's name, etc)
     for(var i = 0; i < this.groups.length; i++) {
-        this.groups[i].display(planDiv);
+        this.groups[i].display(groupPlanElement);
     }
 }
 
 
-var Subject = function(name) {
+/*
+    A Subject contains all the information of a subject,
+    like the name, the id, and the groups.
+*/
+var Subject = function() {
     var obj = Object.create(Subject.prototype);
 
-    obj.name = name;
+    obj.id = "";
+    obj.name = "";
     obj.optional = "";
     obj.credits = 0;
     obj.groups = []; 
@@ -142,6 +406,9 @@ var Subject = function(name) {
     return obj;
 }
 
+/*
+    Sets the groups for this subject.
+*/
 Subject.prototype.setGroups = function (groups) {
     this.groups = groups;
     for(var i = 0; i < groups.length; i++) {
@@ -150,6 +417,11 @@ Subject.prototype.setGroups = function (groups) {
 }
 
 
+/*
+    A Group belongs to a subject.
+    It has a number, or section, like 303, 401, ...
+    It has a teacher, and a schedule.
+*/
 var Group = function() {
     var obj = Object.create(Group.prototype);
 
@@ -161,60 +433,108 @@ var Group = function() {
     return obj;
 }
 
+/*
+    Displays the group information to the user.
+
+    Adds a row to the groups table inside a group plan view.
+    Displays the schedule entries in the schedule table
+    inside a group plan view.
+*/
 Group.prototype.display = function(planDiv) {
     var groupsTable = planDiv.find(".groups table");
 
     groupsTable.append(
-        "<tr><td>" + this.number + "</td><td>" + this.subject.name + "</td><td>" + this.teacher + "</td></tr>"
+        "<tr>" +
+        "<td>" + this.number + "</td>" +
+        "<td>" + this.subject.name + "</td>" +
+        "<td>" + this.teacher + "</td>" +
+        "</tr>"
     );
 
-    this.schedule.display(planDiv.find(".schedule table"), this);
+    var scheduleTable = planDiv.find(".schedule table");
+    this.schedule.display(scheduleTable, this);
 }
 
+/*
+    A Schedule contains a set of ScheduleEntries
+    arranged in a bidimensional array in the following way:
 
+    [
+        0 => [monday-entry1, monday-entry2, ...]
+        1 => [tuesday-entry1, tuesday-entry2, ...]
+        .
+        .
+        .
+        4 => [friday-entry1, friday-entry2, ...]
+    ]
+
+    Where the first position in the array indicates the
+    day of the week or the entry(ies), and each of those
+    arrays contains all the ScheduleEntries of that day.
+
+    This makes it easier when combining schedules or 
+    checking if schedules overlap.
+*/
 var Schedule = function(entries) {
     var obj = Object.create(Schedule.prototype);
 
     obj.entries = [];
-
-    for(var i = 0; i < entries.length; i++) {
-        if(!(obj.entries[entries[i].day] instanceof Array)) {
-            obj.entries[entries[i].day] = [entries[i]];
-        }
-        else {
-            obj.entries[entries[i].day].push(entries[i]);
-        }
-    }
-
+    obj.addEntries(entries);
+    
     return obj;
 }
 
-Schedule.prototype.display = function(table, group) {
-    this.entries.forEach(function(entries, day) {
-        for(var i = 0; i < entries.length; i++) {
-            entries[i].display(table, group);
-        }
-    }, this); 
+/*
+    Adds a ScheduleEntry to the Schedule.
+
+    It puts the entry in the corresponding position
+    in the array according to the entry's day.
+*/
+Schedule.prototype.addEntry = function(entry) {
+    if(!(this.entries[entry.day] instanceof Array)) {
+        this.entries[entry.day] = [];
+    }
+
+    this.entries[entry.day].push(entry);
 }
 
-Schedule.prototype.combine = function (other) {
+/*
+    Adds an array of ScheduleEntries to the entries array
+*/
+Schedule.prototype.addEntries = function(entries) {
+    for(var i = 0; i < entries.length; i++) {
+        this.addEntry(entries[i]);
+    }
+}
+
+/*
+    Combines the other Schedule into this Schedule
+    if possible.
+
+    Returns true if the combination was successful,
+    false if not.
+*/
+Schedule.prototype.combine = function(other) {
     if(this.overlaps(other)) return false;
 
+    // Just add the other's entries to this one
     other.entries.forEach(function(entries, day) {
-        for(var i = 0; i < entries.length; i++) {
-            if(!(this.entries[day] instanceof Array)) {
-                this.entries[day] = [];
-            }
-
-            this.entries[day].push(entries[i]);
-        } 
+        this.addEntries(entries);
+        // entries.forEach(function(entry, index) {
+            // this.addEntry(entry);
+        // }, this);
     }, this);
 
     return true;
 }
 
-Schedule.prototype.overlaps = function (other) {
-    var overlap = false;
+/*
+    Checks if the other Schedule overlaps with this.
+
+    Returns true if they overlap, false if not.
+*/
+Schedule.prototype.overlaps = function(other) {
+    var overlaps = false;
 
     this.entries.forEach(function(entries1, day) {
         entries2 = other.entries[day];
@@ -226,19 +546,32 @@ Schedule.prototype.overlaps = function (other) {
                 var entry1 = entries1[i];
                 var entry2 = entries2[j];
 
-                if(entry1.startTime >= entry2.startTime && entry1.startTime < entry2.endTime ||
-                    entry1.endTime <= entry2.endTime && entry1.endTime > entry2.startTime) {
-                    overlap = true;
+                if(entry1.overlaps(entry2)) {
+                    overlaps = true;
                     return;
                 }
             } 
         }
     });
 
-    return overlap;
+    return overlaps;
 }
 
+/*
+    Displays the schedule into the schedule table given.
+*/
+Schedule.prototype.display = function(table, group) {
+    this.entries.forEach(function(entries, day) {
+        entries.forEach(function(entry, index) {
+            entry.display(table, group);
+        })
+    }); 
+}
 
+/*
+    A ScheduleEntry defines a the day, start time, end time
+    and classroom of a class's session.
+*/
 var ScheduleEntry = function() {
     var obj = Object.create(ScheduleEntry.prototype);
 
@@ -250,99 +583,48 @@ var ScheduleEntry = function() {
     return obj;
 }
 
-ScheduleEntry.prototype.display = function(table, group) {
+/*
+    Checks if this entry overlaps with other.
+
+    Returns true if they overlap, false if not.
+*/
+ScheduleEntry.prototype.overlaps = function(other) {
+    return this.startTime >= other.startTime &&
+            this.startTime < other.endTime ||
+            this.endTime <= other.endTime &&
+            this.endTime > other.startTime;
+}
+
+/*
+    Displays this schedule entry into the schedule table given.
+*/
+ScheduleEntry.prototype.display = function(scheduleTable, group) {
     for(var i = this.startTime; i < this.endTime; i++) {
-        table.find("tr:nth-child(" + (i - 5) + ") td:nth-child(" + (this.day + 2) + ")")
-        .addClass("td-subject")
-        .html("<span class=\"td-subject-name\">" + group.subject.name + "</span>" + "<span class=\"td-subject-classroom\">" + this.classroom + "</span>");
+        var row = i - 5;
+        var col = this.day + 2;
+
+        var cell = getTableCell(scheduleTable, row, col);
+        cell.addClass("td-subject");
+        cell.html(
+            "<span class=\"td-subject-name\">" + group.subject.name + "</span>" +
+            "<span class=\"td-subject-classroom\">" + this.classroom + "</span>"
+        );
     }
 }
 
 
-function getDayNumber(day) {
-    switch(day) {
-        case "Lun":
-            return 0;
-        case "Mar":
-            return 1;
-        case "Mie":
-            return 2;
-        case "Jue":
-            return 3;
-        case "Vie":
-            return 4;
-    } 
-}
+/*
+    Shows a message.
 
-function getNewPossiblePlans(oldPlans, subject) {
-    var newPlans = [];
+    message param: The text to be displayed.
+    type param: The type of the message.
 
-    for(var i = 0; i < subject.groups.length; i++) {
-        if(oldPlans.length == 0) {
-            newPlans.push(Plan([subject.groups[i]]));
-            continue;
-        }
+    The message's type can be one of the following:
+        success, info, warning, danger.
 
-        for (var j = 0; j < oldPlans.length; j++) {
-            if(!oldPlans[j].schedule().overlaps(subject.groups[i].schedule)) {
-                var newPlan = oldPlans[j].clone();
-                newPlan.addGroup(subject.groups[i]);
-                newPlans.push(newPlan);
-            }
-        }
-    }
-
-    return newPlans;
-}
-
-function getAllPossiblePlans() {
-    var possiblePlans = [];
-
-    for(var i = 0; i < selectedSubjects.length; i++) {
-        possiblePlans = getNewPossiblePlans(possiblePlans, selectedSubjects[i]);
-    }
-
-    return possiblePlans;
-}
-
-function isSubjectSelected(subject) {
-    for(var i = 0; i < selectedSubjects.length; i++) {
-        if(subject.name == selectedSubjects[i].name) return true;
-    }
-}
-
-function showPlans() {
-    hideMessage();
-    $(".plans").empty();
-    $(".slide-control").hide();
-    $(".slide-control-mobile").hide();
-
-    containerPlansLength = 0;
-    currentPlanIndex = 0;
-
-    if(selectedSubjects.length == 0) return;
-
-    if(plans.length == 0) {
-        showMessage("No se encontro ningun horario con las materias seleccionadas", "warning");
-        return;
-    }
-    else if(plans.length == 1) {
-        showMessage("Se encontró <b>1</b> horario", "success"); 
-    }
-    else {
-        showMessage("Se encontraron <b>" + plans.length + "</b> posibles horarios", "success"); 
-        $(".right-control").show();
-    }
-
-    plans[0].display();
-
-    $(".plans .plan:first-child").addClass("current").show();
-    $(".plan .groups").hide();
-
-    containerPlansLength = 1;
-}
-
-
+    The message is displayed for ten seconds and then 
+    it is hidden.
+*/
 function showMessage(message, type) {
     hideMessage(false);
     $("#message").addClass("alert-" + type).find("> span").html(message);
@@ -358,72 +640,48 @@ function showMessage(message, type) {
     }, 10000);
 }
 
+/*
+    Hides the message.
+
+    WithEffect determines if the message should be
+    hidden with a fade effect or not.
+*/
 function hideMessage(withEffect) {
-    $("#message")
+    var message = $("#message")
     .removeClass("alert-success")
     .removeClass("alert-warning")
     .removeClass("alert-danger")
     .removeClass("alert-info");
 
     if(withEffect) {
-        $("#message").fadeOut("fast");
+        message.fadeOut("fast");
     }
     else {
-        $("#message").hide();
+        message.hide();
     }
 }
 
-function removeSubject(subject) {
-    for(var i = 0; i < selectedSubjects.length; i++) {
-        if(selectedSubjects[i].name == subject) {
-            totalCredits -= selectedSubjects[i].credits;
+/*
+    Called when the user presses the main button
+    on the index page.
 
-            selectedSubjects.splice(i, 1);
-
-            $(".selected-subjects table tr:nth-child(" + (i + 2) + ")").remove();
-            $("span.credits").html(totalCredits);
-            if(selectedSubjects.length == 0) {
-                $(".selected-subjects").hide();
-                $(".start-message").show();
-            }
-
-           return true;
-        }
-    }
-
-    return false;
-}
-
+    Hides the index message and shows the app's content.
+*/
 function startEvent() {
     $(".index-page-container").hide();
     $(".app-container").css("display", "flex"); 
 }
 
-function addSubject(subject) {
-    selectedSubjects.push(subject);
-
-    $(".selected-subjects table").append(
-        "<tr><td>" + subject.name +
-        "</td><td>" + subject.credits +
-        "</td><td>" + subject.optional +
-        "</td><td><button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name +
-        "\">&times;</button></td></tr>"
-    );
-
-    totalCredits += subject.credits;
-    $("span.credits").html(totalCredits);
-}
-
+/*
+    Called when the user adds a new subject to the plan. 
+*/
 function addSubjectEvent(event) {
-    $("#materia").attr("disabled", "disabled");
-    $(".btn-subject").attr("disabled", "disabled"); 
-    hideMessage(false);
-    $(".start-message").hide();
-    $(".info-container").hide();
-    $(".slide-control").hide();
-    $(".slide-control-mobile").hide();
+    disableInputs();
+    hideEverything();
     $(".loader").show();
 
+    // Sends an AJAX request to get the raw HTML with the
+    // subject's information
     $.ajax({
         url: "https://horario-fie.herokuapp.com/pageScript.php",
         method: "POST",
@@ -438,33 +696,43 @@ function addSubjectEvent(event) {
             showMessage("No existen grupos para la materia seleccionada", "danger");
             return;
         }
-        if(!isSubjectSelected(subject)) { 
-            addSubject(subject);
-            plans = getNewPossiblePlans(plans, selectedSubjects[selectedSubjects.length - 1]);
+
+        // Creates a new Plan object if it doesn't exist
+        if(plan == null) {
+            plan = Plan();
         }
 
-        showPlans();
+        if(!plan.hasSubject(subject)) { 
+            plan.addSubject(subject);
+        }
+
+        plan.displayFirstGroupPlan();
     })
     .fail(function() {
         showMessage("Error al conectar con el servidor. Por favor inténtalo de nuevo", "danger");
     })
     .always(function() {
-        $("#materia").removeAttr("disabled");
-        $(".btn-subject").removeAttr("disabled"); 
+        enableInputs();
         $(".loader").hide();
         $(".selected-subjects").show();
         $(".info-container").show();
     });
-
-    event.preventDefault();
 }
 
-function changeTabEvent(event) {
-    var clickedTab = $(event.target);
-    if(clickedTab.hasClass("tab-selected")) return;
-    showTab(clickedTab.data("tab"));
+/*
+    Called when the user removes a subject
+*/
+function removeSubjectEvent(event) {
+    var subjectName = $(event.target).data("subject");
+    plan.removeSubject(subjectName);
+    plan.displayFirstGroupPlan();
 }
 
+/*
+    Show the tab specified by tabName.
+    The tabs can be "Schedule (Horario)" or "Groups (Groups)"
+    these are inside the group plan view.
+*/
 function showTab(tabName) {
     $(".current .tab-selected").removeClass("tab-selected");
     $(".current ." + tabName + "-tab").addClass("tab-selected");
@@ -473,66 +741,93 @@ function showTab(tabName) {
     $(".current ." + tabName).show();
 }
 
-function changeScheduleEvent(event) {
+/*
+    Called when the user wants to change the currently
+    displayed group plan. This is, when the user clicks
+    any of the buttons to change the group plan.
+*/
+function changeGroupPlanEvent(event) {
     var button = $(event.target).parent();
-
-    var tabToSelect = $(".current .tab-selected").data("tab");
-
     if(button.hasClass("left-control")) {
-        currentPlanIndex--;
-
-        var current = $(".current");
-        var next = current.prev();
-
-        current.removeClass("current");
-        current.hide();
-
-        next.addClass("current");
-        showTab(tabToSelect);
-        next.show();
-
-        $(".right-control").show();
-        if(next.prev().length == 0) {
-            $(".left-control").hide();
-        }
+        plan.displayPreviousGroupPlan();
     }
     else if(button.hasClass("right-control")) {
-        currentPlanIndex++;
-
-        var current = $(".current");
-
-        current.removeClass("current");
-        current.hide();
-
-        displayNextPlan(currentPlanIndex, tabToSelect);
-
-        $(".left-control").show();
-        if((currentPlanIndex + 1) >= plans.length) {
-            $(".right-control").hide();
-        }
+        plan.displayNextGroupPlan();
     }
 } 
 
-function displayNextPlan(index, tabToSelect) {
-    if(index >= containerPlansLength) {
-        plans[index].display(); 
-        containerPlansLength++;
-    }
+/*
+    Show the new group plan, hiding the current one.
+*/
+function showGroupPlan(plan, newElement) {
+    var currentElement = $(".current");
+    var tabToSelect = currentElement.find(".tab-selected").data("tab");
 
-    var current = $(".plans .plan:nth-of-type(" + (index+1) + ")");
-    current.addClass("current");
+    currentElement.removeClass("current").hide();
+    newElement.addClass("current");
     showTab(tabToSelect);
-    current.show();
-}
+    newElement.show();
 
-function removeSubjectEvent(event) {
-    var subject = $(event.target).data("subject");
-    if(removeSubject(subject)) {
-        plans = getAllPossiblePlans();
-        showPlans();
+    // Show only the necessary buttons for changing the group plan
+    $(".slide-control").show();
+    $(".slide-control-mobile").show();
+    if(newElement.prev().length == 0) {
+        $(".left-control").hide();
+    }
+    if((plan.currentGroupPlan + 1) >= plan.groupPlans.length) {
+        $(".right-control").hide();
     }
 }
 
-function hideMessageEvent() {
-    hideMessage(true);
+
+/*
+    Helper functions to manipulate the DOM and
+    make the code a little more readable.
+*/
+
+function hideEverything() {
+    hideMessage(false);
+    $(".slide-control").hide();
+    $(".slide-control-mobile").hide();
+    $(".start-message").hide();
+    $(".info-container").hide();
+    $(".loader").hide();
+}
+
+function showStartMessage() {
+    hideEverything();
+    $(".start-message").show();
+}
+
+function addSubjectToTable(subject) {
+    $(".selected-subjects table").append(
+        "<tr>" +
+            "<td>" + subject.name + "</td>" +
+            "<td>" + subject.credits + "</td>" +
+            "<td>" + subject.optional + "</td>" +
+            "<td>" +
+                "<button class=\"btn btn-danger remove-subject-btn\" data-subject=\"" + subject.name + "\">" +
+                    "&times;" +
+                "</button>" +
+            "</td>" +
+        "</tr>"
+    );
+}
+
+function removeSubjectFromTable(index) {
+    $(".selected-subjects table tr:nth-child(" + (index + 2) + ")").remove();
+}
+
+function getTableCell(table, row, col) {
+    return table.find("tr:nth-child(" + row + ")").find("td:nth-child(" + col + ")");
+}
+
+function enableInputs() {
+    $("#materia").removeAttr("disabled");
+    $(".btn-subject").removeAttr("disabled"); 
+}
+
+function disableInputs() {
+    $("#materia").attr("disabled", "disabled");
+    $(".btn-subject").attr("disabled", "disabled"); 
 }
