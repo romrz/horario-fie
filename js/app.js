@@ -292,8 +292,8 @@ Plan.prototype.displayFirstGroupPlan = function() {
     this.groupPlans[0].display();
     this.displayedGroupPlans = 1;
 
-    $(".plans .plan:first-child").addClass("current").show();
-    $(".plan .groups").hide();
+    $(".plans .group-plan:first-child").addClass("current").show();
+    $(".group-plan .groups").hide();
 }
 
 /*
@@ -369,12 +369,12 @@ GroupPlan.prototype.getSchedule = function() {
 GroupPlan.prototype.display = function() {
     // Gets the group plan HTML template and appends it
     // to the group plan container
-    var groupPlanTemplate = $(".plan-div-blueprint").html();
+    var groupPlanTemplate = $(".group-plan-div-template").html();
     var plansContainer = $(".plans");
     plansContainer.append(groupPlanTemplate);
 
     // Gets the just inserted group plan div
-    var groupPlanElement = plansContainer.find(".plan:last-child");
+    var groupPlanElement = plansContainer.find(".group-plan:last-child");
 
     var current = plan.currentGroupPlan + 1;
     var total = plan.groupPlans.length;
