@@ -12,7 +12,7 @@ html, body {
 body {
     background-color: #EEE;
     /*background-image: url("/img/gplay.png");*/
-    background-image: url("/img/transparent-square-tiles.png");
+    background-image: url("/assets/img/transparent-square-tiles.png");
     background-attachment: fixed;
 
     color: #555;    
@@ -453,7 +453,7 @@ table td {
 
 /* Loader */
 .loader {
-    background-image: url("/img/ajax-loader.gif");
+    background-image: url("/assets/img/ajax-loader.gif");
     background-repeat: no-repeat;
     background-position: center;
     opacity: 0.8;
