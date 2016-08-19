@@ -683,7 +683,7 @@ function addSubjectEvent(event) {
     // Sends an AJAX request to get the raw HTML with the
     // subject's information
     $.ajax({
-        url: "https://horario-fie.herokuapp.com/pageScript.php",
+        url: "https://horario-fie.herokuapp.com/php/pageScript.php",
         method: "POST",
         data: { materia: $("#materia").val() },
         dataType: "html",
