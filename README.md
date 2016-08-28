@@ -1,10 +1,12 @@
 # Horario FIE
-Horario FIE es una aplicación web dirigida para facilitar a los estudiantes la planeación nuestros horarios.
+**Horario FIE** es una aplicación web para facilitar a los estudiantes la planeación los horarios.
 
 ## ¿Cómo funciona?
-Cuando se selecciona alguna materia, se realiza una petición a la página de escolar.fie: escolar.fie.umich.mx/actual/estudiante/materia-sig.php (De esta manera siempre se obtiene la información actualizada de las materias).
-Esta petición se realiza por el método POST con la clave de la materia como parámetro.
+Cuando se selecciona alguna materia, se realiza una petición a la [API de Horario FIE](https://github.com/romrz/horario-fie-api).
+Ésta a su vez realiza una petición **POST** a la página https://escolar.fie.umich.mx/actual/estudiante/materia-sig.php pasándole como parámetro la clave de la materia que se desea consultar.
 
-Una vez realizada la petición se obtiene el contenido de la respuesta, es decir, el contenido HTML que se vería en el navegador si la petición la hubiera hecho un usuario. Este HTML contiene toda la información necesaria de la materia para poder calcular todos los posibles horarios. Para obtener esta información se utiliza JQuery.
+La petición devuelve el contenido de la página HTML (que se vería en el navegador si la petición la hubiera hecho un usuario) en el que se encuantra toda la información de la materia.
 
-Cuando se obtiene la información de la materia, ahora solo se calculan todos los posibles horarios para las materias seleccionadas y se muestran al usuario. :D
+Como la información de la materia se encuentra esparcida por toda la página HTML, se debe extraer solo la información relevante de la materia. Para esto se utiliza **JQuery**, que hace muy fácil obtener dicha información.
+
+La información de la materia se almacena en Objetos de Javascript que facilitan su manipulación para poder calcular todos los posibles horarios de las materias seleccionadas.

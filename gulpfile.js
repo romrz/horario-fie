@@ -11,9 +11,9 @@ var cleanCSS = require('gulp-clean-css');
     Paths to common resources
 */
 var paths = {
-    bootstrapCSS: './bower_components/bootstrap/dist/css/bootstrap.css',
-    bootstrapJS: './bower_components/bootstrap/dist/js/bootstrap.js',
-    jquery: './bower_components/jquery/dist/jquery.js'
+    bootstrapCSS: './node_modules/bootstrap/dist/css/bootstrap.css',
+    bootstrapJS: './node_modules/bootstrap/dist/js/bootstrap.js',
+    jquery: './node_modules/jquery/dist/jquery.js'
 }
 
 
@@ -21,7 +21,7 @@ var paths = {
     Default task.
     Runs all other tasks.
 */
-gulp.task('default', ['images', 'scripts', 'styles']);
+gulp.task('default', ['images', 'scripts', 'styles', 'html']);
 
 
 /*
@@ -29,20 +29,19 @@ gulp.task('default', ['images', 'scripts', 'styles']);
     Watches the changes of every source file.
 */
 gulp.task('watch', function() {
-
     gulp.watch('./src/img/*', ['images']);
     gulp.watch('./src/js/*', ['scripts']);
     gulp.watch('./src/css/*', ['styles']);
-
+    gulp.watch('./src/*.html', ['html']);
 });
 
 /*
     Images task.
-    Just moves the images to assets.
+    Just moves the images to the public folder.
 */
 gulp.task('images', function() {
     gulp.src('./src/img/*')
-    .pipe(gulp.dest('./assets/img/'));
+    .pipe(gulp.dest('./public/img/'));
 });
 
 /*
@@ -53,7 +52,7 @@ gulp.task('scripts', function() {
     gulp.src([paths.jquery, './src/js/*.js'])
     .pipe(concat('scripts.js'))
     .pipe(uglify())
-    .pipe(gulp.dest('./assets/js/'));
+    .pipe(gulp.dest('./public/js/'));
 });
 
 /*
@@ -64,5 +63,15 @@ gulp.task('styles', function() {
     gulp.src([paths.bootstrapCSS, './src/css/*.css'])
     .pipe(concat('styles.css'))
     .pipe(cleanCSS())
-    .pipe(gulp.dest('./assets/css/'));
+    .pipe(gulp.dest('./public/css/'));
 });
+
+/*
+    HTML task.
+    Just moves the HTML files to the public folder.
+*/
+gulp.task('html', function() {
+    gulp.src('./src/html/*')
+    .pipe(gulp.dest('./public/'));
+});
+
