@@ -10,3 +10,6 @@ La petición devuelve el contenido de la página HTML (que se vería en el naveg
 Como la información de la materia se encuentra esparcida por toda la página HTML, se debe extraer solo la información relevante de la materia. Para esto se utiliza **JQuery**, que hace muy fácil obtener dicha información.
 
 La información de la materia se almacena en Objetos de Javascript que facilitan su manipulación para poder calcular todos los posibles horarios de las materias seleccionadas.
+
+## ¿Quieres contribuir?
+Genial! Echa un vistazo a como contribuir en [aquí](https://github.com/romrz/horario-fie/blob/master/CONTRIBUTING.md)
