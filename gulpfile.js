@@ -13,7 +13,8 @@ var cleanCSS = require('gulp-clean-css');
 var paths = {
     bootstrapCSS: './node_modules/bootstrap/dist/css/bootstrap.css',
     bootstrapJS: './node_modules/bootstrap/dist/js/bootstrap.js',
-    jquery: './node_modules/jquery/dist/jquery.js'
+    jquery: './node_modules/jquery/dist/jquery.js',
+    vue: './node_modules/vue/dist/vue.js'
 }
 
 
@@ -51,7 +52,7 @@ gulp.task('images', function() {
 gulp.task('scripts', function() {
     gulp.src([paths.jquery, './src/js/*.js'])
     .pipe(concat('scripts.js'))
-    .pipe(uglify())
+    // .pipe(uglify())
     .pipe(gulp.dest('./public/js/'));
 });
 
