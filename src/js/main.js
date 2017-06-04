@@ -53,14 +53,14 @@ function addSubjectEvent(event) {
     // Sends an AJAX request to get the raw HTML with the
     // subject's information
     $.ajax({
-        url: "http://api.horariofie.com",
+        url: "https://horario-fie-api-v2.herokuapp.com",
         method: "GET",
         data: { subject: $("#materia").val() },
-        dataType: "html",
+        dataType: "json",
         crossDomain: true,
     })
-    .done(function(html) {
-        var subject = SubjectParser(html).parse();
+    .done(function(json) {
+        var subject = SubjectMapper(json).map();
 
         if(subject === null) {
             showMessage("No existen grupos para la materia seleccionada", "danger");

@@ -43,6 +43,50 @@ GroupPlan.prototype.getSchedule = function() {
     }
 
     return schedule;
+}
+
+GroupPlan.prototype.getScheduleTable = function() {
+    var table = [];
+
+    for(var r = 0; r < 13; r++)  {
+        var row = [];
+        for(var c = 0; c < 5; c++) {
+            row.push(null);
+        }
+        table.push(row);
+    }
+
+    // console.log(this);
+
+    for(var g = 0; g < this.groups.length; g++) {
+        var group = this.groups[g];
+
+        console.log(group);
+
+        var entries = group.schedule.entries;
+        console.log(entries);
+        // entries.forEach(function(entry, day) {
+        entries.forEach(function(sentries, day) {
+            sentries.forEach(function(entry, index) {
+                // entry.display(table, group);
+            // for(var i = 0; i < entries.length; i++) {
+                // var entry = entries[i];
+                console.log(entry);
+                console.log(entry.startTime);
+                console.log(entry.endTime);
+                console.log(entry.startTime < entry.endTime);
+                for(var h = entry.startTime; h < entry.endTime; h++) {
+                    var e = { subject: group.subject.name, classroom: entry.classroom };
+                    console.log(e);
+                    table[h - 7][entry.day] = e;
+                }
+            });
+        }); 
+    }
+
+    console.log(table);
+
+    return table;
 };
 
 /*
