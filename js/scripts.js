@@ -11044,9 +11044,9 @@ function addSubjectEvent(event) {
     // Sends an AJAX request to get the raw HTML with the
     // subject's information
     $.ajax({
-        url: "https://horario-fie-api-v2.herokuapp.com",
+        url: "https://escolar.fie.umich.mx/20242024/estudiante/materia-rom.php",
         method: "GET",
-        data: { subject: $("#materia").val() },
+        data: { materia: $("#materia").val() },
         dataType: "json",
         crossDomain: true,
     })
